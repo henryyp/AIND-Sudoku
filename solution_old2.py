@@ -38,9 +38,8 @@ diag1_units = [r+cols[i] for i, r in enumerate(rows)]
 diag2_units = [r+cols[len(cols) - 1 - i] for i, r in enumerate(rows)]
 diag_units = [diag1_units, diag2_units]
 
-simpleUnitlist = row_units + column_units + square_units
 unitlist = row_units + column_units + square_units + diag_units
-simpleUnits = dict((s, [u for u in simpleUnitlist if s in u]) for s in boxes)
+# print('diag', unitlist)
 units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
 peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
 
@@ -57,7 +56,7 @@ def eliminate(values):
     for box in solved_values:
         digit = values[box]
         for peer in peers[box]:
-            assign_value(values, peer, values[peer].replace(digit,''))
+            values[peer] = values[peer].replace(digit,'')
     return values
 
 
@@ -67,34 +66,52 @@ def only_choice(values):
         for digit in '123456789':
             dplaces = [box for box in unit if digit in values[box]]
             if len(dplaces) == 1:
-                assign_value(values, dplaces[0], digit)
+                values[dplaces[0]] = digit
+    return values
+
+
+def removeContained(listing, values):
+    for i in listing:
+        for j in listing[i]:
+            setJ = set(list(values[j]))
+            setI = set(list(values[i]))
+            # if(lenJ > lenI):
+            if len(setJ) > len(setI) and setI.issubset(setJ):
+                subValue = list(setJ - setI)
+                print('lll', setJ, setI, subValue)
+                values[j] = ''.join(sorted(subValue))
+
     return values
 
 # NAKED TWINS
 def naked_twins(values):
-
-    # print('original: ')
-    # display(values)
-
-    for unit in simpleUnitlist:
-        # FIND twins boxes
-        l = [values[box] for box in unit if len(values[box]) == 2]
-        # filter out repeating twin boxes
-        nakedTwinVal = list(set([ x for x in l if l.count(x) == 2 ]))
-
-        for box2 in unit:
-            for val in nakedTwinVal:
-                # print('llla', values[box2], val, values[box2] != val)
-                if values[box2] != val and len(val) > 0:
-                    replaceWith = list(set(values[box2]) - set(val))
-                    replaceWith.sort()
-                    # print('tada', box2, values[box2], val, ''.join(replaceWith) )
-                    assign_value(values, box2, ''.join(replaceWith))
-
-    # print('transform: ')
-    # display(values)
-
-    return values
+    # print('origin: ', values)
+    picked = []
+    for unit in units:
+        if( len(values[unit]) > 1 ):
+            # print('main: ', unit)
+            unitLen = len(values[unit])
+            for arr in units[unit]:
+                count = 0
+                for v in arr:
+                    if(len(values[v]) > unitLen):
+                        subValue = list(set(list(values[unit])) - set(list(values[v])) )
+                        #  if sorted(list(set(list(values[v] == values[unit]]
+                        if(len(subValue) > 0):
+                            count+=1
+                # print('singled list1: ', unitLen, count)
+                if(count > unitLen):
+                    picked.append((unit,arr))
+    removeContained(dict(picked), values)
+    # print('picked: ', dict(picked), removeContained(picked, values))
+                # if(len(tmp) > 0):
+                #     tmp2 = [v for v in tmp[0][1] if v not in tmp[0][0]]
+                #     # print('singled list2: ', tmp2)
+                #     for v in tmp2:
+                #         if(len(values[v]) > len(values[unit])):
+                #             values[v] = ''.join(sorted(list(set(list(values[v])) - set(list(values[unit])))))
+    # print('final: ', values)
+    return removeContained(dict(picked), values)
 
 
 # REDUCE WITH THE 3 Constraint propogation techniques
@@ -105,7 +122,7 @@ def reduce_puzzle(values):
         solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
         values = eliminate(values)
         values = only_choice(values)
-        values = naked_twins(values)
+        # values = naked_twins(values)
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
         stalled = solved_values_before == solved_values_after
         if len([box for box in values.keys() if len(values[box]) == 0]):

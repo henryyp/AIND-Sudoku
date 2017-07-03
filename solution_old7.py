@@ -73,9 +73,6 @@ def only_choice(values):
 # NAKED TWINS
 def naked_twins(values):
 
-    # print('original: ')
-    # display(values)
-
     for unit in simpleUnitlist:
         # FIND twins boxes
         l = [values[box] for box in unit if len(values[box]) == 2]
@@ -84,15 +81,10 @@ def naked_twins(values):
 
         for box2 in unit:
             for val in nakedTwinVal:
-                # print('llla', values[box2], val, values[box2] != val)
                 if values[box2] != val and len(val) > 0:
                     replaceWith = list(set(values[box2]) - set(val))
                     replaceWith.sort()
-                    # print('tada', box2, values[box2], val, ''.join(replaceWith) )
                     assign_value(values, box2, ''.join(replaceWith))
-
-    # print('transform: ')
-    # display(values)
 
     return values
 

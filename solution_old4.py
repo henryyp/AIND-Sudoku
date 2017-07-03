@@ -40,7 +40,7 @@ diag_units = [diag1_units, diag2_units]
 
 simpleUnitlist = row_units + column_units + square_units
 unitlist = row_units + column_units + square_units + diag_units
-simpleUnits = dict((s, [u for u in simpleUnitlist if s in u]) for s in boxes)
+# print('diag', unitlist)
 units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
 peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
 
@@ -57,7 +57,7 @@ def eliminate(values):
     for box in solved_values:
         digit = values[box]
         for peer in peers[box]:
-            assign_value(values, peer, values[peer].replace(digit,''))
+            values[peer] = values[peer].replace(digit,'')
     return values
 
 
@@ -67,35 +67,48 @@ def only_choice(values):
         for digit in '123456789':
             dplaces = [box for box in unit if digit in values[box]]
             if len(dplaces) == 1:
-                assign_value(values, dplaces[0], digit)
+                values[dplaces[0]] = digit
     return values
+
+
+# CHECK IF CONTAINED
+def containCheck(unitList, v):
+    tmp = [u for u in unitList if set(list(u)) <= set(list(v))]
+    # print('ttt: ', tmp, len(v))
+    return len(tmp) >= len(v)
+
 
 # NAKED TWINS
 def naked_twins(values):
-
-    # print('original: ')
-    # display(values)
-
+    output = list()
     for unit in simpleUnitlist:
-        # FIND twins boxes
-        l = [values[box] for box in unit if len(values[box]) == 2]
-        # filter out repeating twin boxes
-        nakedTwinVal = list(set([ x for x in l if l.count(x) == 2 ]))
+        unitDict = dict([(box, values[box]) for box in unit])
+        unitList = list(unitDict.values())
+        print('lala', unitList, unit)
+        # tmp = list(set([v for k, v in unitDict.items() if containCheck(unitList, v) and unitList.count(v) > len(v) - 1]))
+        tmp = list(set([v for k, v in unitDict.items() if containCheck(unitList, v)]))
+        print('tmp: ', tmp)
+        for i in unit:
+            # print(tmp, values[i], i)
+            for j in tmp:
+                if(len( set(list(j)) - set(values[i]) ) <= len(list(j)) - 1 and len(values[i]) > len(list(j)) ):
+                    l = list(set(values[i]) - set(list(j)))
+                    l.sort()
+                    output.append((i, ''.join(l)))
 
-        for box2 in unit:
-            for val in nakedTwinVal:
-                # print('llla', values[box2], val, values[box2] != val)
-                if values[box2] != val and len(val) > 0:
-                    replaceWith = list(set(values[box2]) - set(val))
-                    replaceWith.sort()
-                    # print('tada', box2, values[box2], val, ''.join(replaceWith) )
-                    assign_value(values, box2, ''.join(replaceWith))
+    dictOut = dict(output)
+    newValues = dict(values)
+    for k in dictOut:
+        newValues[k] = dictOut[k]
 
-    # print('transform: ')
-    # display(values)
-
-    return values
-
+    # print('checked', dictOut)
+    if len(dictOut) > 0:
+        return naked_twins(newValues)
+    else:
+        return values
+    #
+    # print(newValues, values)
+    # return values
 
 # REDUCE WITH THE 3 Constraint propogation techniques
 def reduce_puzzle(values):

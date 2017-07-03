@@ -40,7 +40,7 @@ diag_units = [diag1_units, diag2_units]
 
 simpleUnitlist = row_units + column_units + square_units
 unitlist = row_units + column_units + square_units + diag_units
-simpleUnits = dict((s, [u for u in simpleUnitlist if s in u]) for s in boxes)
+# print('diag', unitlist)
 units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
 peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
 
@@ -57,7 +57,7 @@ def eliminate(values):
     for box in solved_values:
         digit = values[box]
         for peer in peers[box]:
-            assign_value(values, peer, values[peer].replace(digit,''))
+            values[peer] = values[peer].replace(digit,'')
     return values
 
 
@@ -67,32 +67,43 @@ def only_choice(values):
         for digit in '123456789':
             dplaces = [box for box in unit if digit in values[box]]
             if len(dplaces) == 1:
-                assign_value(values, dplaces[0], digit)
+                values[dplaces[0]] = digit
+    return values
+
+
+def removeContained(listing, values):
+
     return values
 
 # NAKED TWINS
 def naked_twins(values):
-
-    # print('original: ')
-    # display(values)
-
     for unit in simpleUnitlist:
-        # FIND twins boxes
-        l = [values[box] for box in unit if len(values[box]) == 2]
-        # filter out repeating twin boxes
-        nakedTwinVal = list(set([ x for x in l if l.count(x) == 2 ]))
+        unitDict = dict([(box, values[box]) for box in unit])
+        # unitNum
+        unitList = list(unitDict.values())
+        tmp = list(set([v for k, v in unitDict.items() if unitList.count(v) > 1 and unitList.count(v) > len(v) - 1]))
+        # tmp = list(set([v for k, v in unitDict.items() if unitList.count(v) > 1]))
 
-        for box2 in unit:
-            for val in nakedTwinVal:
-                # print('llla', values[box2], val, values[box2] != val)
-                if values[box2] != val and len(val) > 0:
-                    replaceWith = list(set(values[box2]) - set(val))
-                    replaceWith.sort()
-                    # print('tada', box2, values[box2], val, ''.join(replaceWith) )
-                    assign_value(values, box2, ''.join(replaceWith))
+        aa = list()
+        for k, v in unitDict.items():
+            if unitList.count(v) > 1:
 
-    # print('transform: ')
-    # display(values)
+                aa.append(v)
+        print('lala', aa)
+        # print(tmp)
+
+        for i in unit:
+            for j in tmp:
+                # print(set(list(j)), set(values[i]), values[i], list(j), len( set(list(j)) - set(values[i]) ), len(values[i]), len(list(j)) )
+                # print( 'set: ', set(list(j)) - set(values[i]), len(list(j)) - 1 )
+                if(len( set(list(j)) - set(values[i]) ) <= len(list(j)) - 1 and len(values[i]) > len(list(j)) ):
+                    n = set(values[i]) - set(list(j))
+                    l = list(n)
+                    # print('oh', j, ''.join(list(n)), sorted(l))
+                    values[i] = ''.join(list(n))
+        #     for j in tmp:
+        #         subValue = list(set(list(j)) - set(list(values[i])))
+        #         print(i, values[i], set(list(values[i])), set(list(j)), subValue)
 
     return values
 
@@ -105,7 +116,7 @@ def reduce_puzzle(values):
         solved_values_before = len([box for box in values.keys() if len(values[box]) == 1])
         values = eliminate(values)
         values = only_choice(values)
-        values = naked_twins(values)
+        # values = naked_twins(values)
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
         stalled = solved_values_before == solved_values_after
         if len([box for box in values.keys() if len(values[box]) == 0]):

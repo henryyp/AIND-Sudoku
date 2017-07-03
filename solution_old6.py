@@ -70,31 +70,78 @@ def only_choice(values):
                 assign_value(values, dplaces[0], digit)
     return values
 
+
+# FIND a list of comparable to k
+def calComparableList(values, unit, k):
+    unitDict = dict([(box, values[box]) for box in unit])
+    unitList = list(unitDict.values())
+    unitK = values[k]
+    tmp = [i for i, u in unitDict.items() if set(list(u)) <= set(list(unitK))]
+    tmp2 = [u for i, u in unitDict.items() if set(list(u)) <= set(list(unitK))]
+    if len(tmp) >= len(unitK) and len(unitK) > 1 and len(unitK) < 3:
+        # print(list(set(unit) - set(tmp)), tmp2, tmp, unitK)
+        return list(set(unit) - set(tmp))
+    else:
+        return []
+
+def findExcessValue(values, filteredList, k):
+    output = []
+    for n in filteredList:
+        nSet = set(list(values[n])) - set(list(values[k]))
+        if(nSet != set(list(values[n]))):
+            mSet = set(list(values[n])) - nSet
+            output.append((n, mSet))
+    return dict(output)
+
 # NAKED TWINS
 def naked_twins(values):
+    nValues = dict(values)
 
-    # print('original: ')
-    # display(values)
 
     for unit in simpleUnitlist:
         # FIND twins boxes
         l = [values[box] for box in unit if len(values[box]) == 2]
         # filter out repeating twin boxes
-        nakedTwinVal = list(set([ x for x in l if l.count(x) == 2 ]))
+        nakedTwinVal = list(set([ x for x in l if l.count(x) > 1 ]))
 
         for box2 in unit:
             for val in nakedTwinVal:
-                # print('llla', values[box2], val, values[box2] != val)
-                if values[box2] != val and len(val) > 0:
+                if len(values[box2]) > 2 and len(val) > 0:
                     replaceWith = list(set(values[box2]) - set(val))
                     replaceWith.sort()
                     # print('tada', box2, values[box2], val, ''.join(replaceWith) )
-                    assign_value(values, box2, ''.join(replaceWith))
+                    assign_value(nValues, box2, ''.join(replaceWith))
 
-    # print('transform: ')
-    # display(values)
+    print('original: ')
+    display(values)
+    print('transform: ')
+    display(nValues)
 
-    return values
+    return nValues
+
+
+# def naked_twins(values):
+#     output = list()
+#     count = 0
+#     nValues = dict(values)
+#     for k, l in simpleUnits.items():
+#         for unit in l:
+#             listToCheck = calComparableList(values, unit, k)
+#             excess = findExcessValue(values, listToCheck, k)
+#             if(len(excess) > 0):
+#                 count += 1
+#                 for m, n in excess.items():
+#                     t = list(set(list(values[m])) - n)
+#                     t.sort()
+#                     assign_value(nValues, m, ''.join(t))
+    # if(count > 0):
+    #     # print('again')
+    #     return naked_twins(nValues)
+    # else:
+    #     return values
+
+    # return nValues
+
 
 
 # REDUCE WITH THE 3 Constraint propogation techniques
